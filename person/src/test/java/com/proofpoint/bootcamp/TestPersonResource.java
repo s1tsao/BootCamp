@@ -16,15 +16,19 @@
 package com.proofpoint.bootcamp;
 
 import com.google.common.collect.ImmutableList;
-import com.proofpoint.bootcamp.monitor.PersonEvent;
 import com.proofpoint.event.client.InMemoryEventClient;
 import com.proofpoint.jaxrs.testing.MockUriInfo;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
 import java.net.URI;
+
+import static com.proofpoint.bootcamp.PersonEvent.personAdded;
+import static com.proofpoint.bootcamp.PersonEvent.personRemoved;
+import static com.proofpoint.bootcamp.PersonEvent.personUpdated;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class TestPersonResource
 {
@@ -36,44 +40,55 @@ public class TestPersonResource
     public void setup()
     {
         eventClient = new InMemoryEventClient();
-        store = new PersonStore(eventClient);
+        store = new PersonStore(new StoreConfig(), eventClient);
         resource = new PersonResource(store);
     }
 
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testGetNullId()
+    @Test
+    public void testNotFound()
     {
-        resource.get(null, MockUriInfo.from(URI.create("http://localhost:8080/v1/person/foo")));
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testGetNullContext()
-    {
-        resource.get("foo", null);
+        Response response = resource.get("foo", MockUriInfo.from(URI.create("http://localhost/v1/person/1")));
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
-    public void testGetNotFound()
+    public void testGet()
     {
-        Response response = resource.get("foo", MockUriInfo.from(URI.create("http://localhost:8080/v1/person/foo")));
-        Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+
+        Response response = resource.get("foo", MockUriInfo.from(URI.create("http://localhost/v1/person/1")));
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), new PersonRepresentation("foo@example.com", "Mr Foo", URI.create("http://localhost/v1/person/1")));
+        assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testGetNull()
+    {
+        resource.get(null, MockUriInfo.from(URI.create("http://localhost/v1/person/1")));
     }
 
     @Test
-    public void testGetSuccess()
+    public void testAdd()
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        Response response = resource.put("foo", new PersonRepresentation("foo@example.com", "Mr Foo", null));
 
-        Response response = resource.get("foo", MockUriInfo.from(URI.create("http://localhost:8080/v1/person/foo")));
-        Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        Assert.assertEquals(response.getEntity(), new PersonRepresentation("foo", "foo@example.com", "Mr Foo", URI.create("http://localhost:8080/v1/person/foo")));
-        Assert.assertNull(response.getMetadata().get("Content-Type"));
+        assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
+        assertNull(response.getEntity());
+        assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
+
+        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo"));
+
+
+        assertEquals(eventClient.getEvents(), ImmutableList.of(
+                personAdded("foo", new Person("foo@example.com", "Mr Foo"))
+        ));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testPutNullId()
     {
-        resource.put(null, new PersonRepresentation("foo", "foo@example.com", "Mr Foo", null));
+        resource.put(null, new PersonRepresentation("foo@example.com", "Mr Foo", null));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
@@ -83,60 +98,38 @@ public class TestPersonResource
     }
 
     @Test
-    public void testAdd()
-    {
-        Response response = resource.put("foo", new PersonRepresentation("foo", "foo@example.com", "Mr Foo", null));
-
-        Assert.assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
-        Assert.assertNull(response.getEntity());
-        Assert.assertNull(response.getMetadata().get("Content-Type"));
-
-        Assert.assertEquals(store.get("foo"), new Person("foo", "foo@example.com", "Mr Foo"));
-
-        Assert.assertEquals(eventClient.getEvents(), ImmutableList.of(
-                PersonEvent.personAdded(new Person("foo", "foo@example.com", "Mr Foo"))
-        ));
-    }
-
-    @Test
     public void testReplace()
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
 
-        Response response = resource.put("foo", new PersonRepresentation("foo", "bar@example.com", "Mr Bar", null));
+        Response response = resource.put("foo", new PersonRepresentation("bar@example.com", "Mr Bar", null));
 
-        Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
-        Assert.assertNull(response.getEntity());
-        Assert.assertNull(response.getMetadata().get("Content-Type"));
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+        assertNull(response.getEntity());
+        assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
 
-        Assert.assertEquals(store.get("foo"), new Person("foo", "bar@example.com", "Mr Bar"));
+        assertEquals(store.get("foo"), new Person("bar@example.com", "Mr Bar"));
 
-        Assert.assertEquals(eventClient.getEvents(), ImmutableList.of(
-                PersonEvent.personAdded(new Person("foo", "foo@example.com", "Mr Foo")),
-                PersonEvent.personUpdated(new Person("foo", "bar@example.com", "Mr Bar"))
+        assertEquals(eventClient.getEvents(), ImmutableList.of(
+                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
+                personUpdated("foo", new Person("bar@example.com", "Mr Bar"))
         ));
     }
 
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testDeleteNullId()
-    {
-        resource.delete(null);
-    }
-
     @Test
-    public void testDeleteExisting()
+    public void testDelete()
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
 
         Response response = resource.delete("foo");
-        Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
-        Assert.assertNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+        assertNull(response.getEntity());
 
-        Assert.assertNull(store.get("foo"));
+        assertNull(store.get("foo"));
 
-        Assert.assertEquals(eventClient.getEvents(), ImmutableList.of(
-                PersonEvent.personAdded(new Person("foo", "foo@example.com", "Mr Foo")),
-                PersonEvent.personDeleted(new Person("foo", "foo@example.com", "Mr Foo"))
+        assertEquals(eventClient.getEvents(), ImmutableList.of(
+                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
+                personRemoved("foo", new Person("foo@example.com", "Mr Foo"))
         ));
     }
 
@@ -144,7 +137,13 @@ public class TestPersonResource
     public void testDeleteMissing()
     {
         Response response = resource.delete("foo");
-        Assert.assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
-        Assert.assertNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertNull(response.getEntity());
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testDeleteNullId()
+    {
+        resource.delete(null);
     }
 }

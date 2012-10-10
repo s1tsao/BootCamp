@@ -20,7 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.proofpoint.bootcamp.monitor.PersonEvent;
+import com.proofpoint.configuration.ConfigurationFactory;
+import com.proofpoint.configuration.ConfigurationModule;
 import com.proofpoint.event.client.EventClient;
 import com.proofpoint.event.client.InMemoryEventClient;
 import com.proofpoint.event.client.InMemoryEventModule;
@@ -37,7 +38,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -54,6 +54,8 @@ import static com.proofpoint.http.client.StaticBodyGenerator.createStaticBodyGen
 import static com.proofpoint.http.client.StatusResponseHandler.createStatusResponseHandler;
 import static com.proofpoint.json.JsonCodec.listJsonCodec;
 import static com.proofpoint.json.JsonCodec.mapJsonCodec;
+import static com.proofpoint.bootcamp.PersonEvent.personAdded;
+import static com.proofpoint.bootcamp.PersonEvent.personRemoved;
 import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -62,27 +64,30 @@ import static org.testng.Assert.assertNull;
 
 public class TestServer
 {
+    private static final int NOT_ALLOWED = 405;
+
     private HttpClient client;
     private TestingHttpServer server;
+
     private PersonStore store;
-    private InMemoryEventClient eventClient;
 
     private final JsonCodec<Map<String, Object>> mapCodec = mapJsonCodec(String.class, Object.class);
     private final JsonCodec<List<Object>> listCodec = listJsonCodec(Object.class);
-
-    private static final int NOT_ALLOWED = 405;
+    private InMemoryEventClient eventClient;
 
     @BeforeMethod
     public void setup()
             throws Exception
     {
+        // TODO: wrap all this stuff in a TestBootstrap class
         Injector injector = Guice.createInjector(
                 new TestingNodeModule(),
                 new InMemoryEventModule(),
                 new TestingHttpServerModule(),
                 new JsonModule(),
                 new JaxrsModule(),
-                new MainModule());
+                new MainModule(),
+                new ConfigurationModule(new ConfigurationFactory(Collections.<String, String>emptyMap())));
 
         server = injector.getInstance(TestingHttpServer.class);
         store = injector.getInstance(PersonStore.class);
@@ -116,8 +121,8 @@ public class TestServer
     public void testGetAll()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put(new Person("bar", "bar@example.com", "Mr Bar"));
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        store.put("bar", new Person("bar@example.com", "Mr Bar"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
 
         List<Object> expected = listCodec.fromJson(Resources.toString(Resources.getResource("list.json"), Charsets.UTF_8));
 
@@ -132,7 +137,7 @@ public class TestServer
     public void testGetSingle()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
 
         URI requestUri = uriFor("/v1/person/foo");
 
@@ -162,35 +167,18 @@ public class TestServer
 
         assertEquals(response.getStatusCode(), javax.ws.rs.core.Response.Status.CREATED.getStatusCode());
 
-        assertEquals(store.get("foo"), new Person("foo", "foo@example.com", "Mr Foo"));
+        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                PersonEvent.personAdded(new Person("foo", "foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo"))
         ));
-    }
-
-    @Test
-    public void testPutMismatchedId()
-            throws IOException, ExecutionException, InterruptedException
-    {
-        String json = Resources.toString(Resources.getResource("single.json"), Charsets.UTF_8);
-
-        StatusResponse response = client.execute(
-                preparePut()
-                        .setUri(uriFor("/v1/person/bla"))
-                        .addHeader(CONTENT_TYPE, APPLICATION_JSON)
-                        .setBodyGenerator(createStaticBodyGenerator(json, Charsets.UTF_8))
-                        .build(),
-                createStatusResponseHandler());
-
-        assertEquals(response.getStatusCode(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @Test
     public void testDelete()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
 
         StatusResponse response = client.execute(
                 prepareDelete()
@@ -204,8 +192,8 @@ public class TestServer
         assertNull(store.get("foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                PersonEvent.personAdded(new Person("foo", "foo@example.com", "Mr Foo")),
-                PersonEvent.personDeleted(new Person("foo", "foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
+                personRemoved("foo", new Person("foo@example.com", "Mr Foo"))
         ));
     }
 

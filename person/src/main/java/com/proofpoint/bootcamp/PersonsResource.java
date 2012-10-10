@@ -26,6 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import static com.proofpoint.bootcamp.PersonRepresentation.from;
+
 @Path("/v1/person")
 public class PersonsResource
 {
@@ -34,7 +36,7 @@ public class PersonsResource
     @Inject
     public PersonsResource(PersonStore store)
     {
-        Preconditions.checkNotNull(store, "store is null");
+        Preconditions.checkNotNull(store, "store must not be null");
 
         this.store = store;
     }
@@ -45,9 +47,8 @@ public class PersonsResource
     {
         Builder<PersonRepresentation> builder = ImmutableList.builder();
         for (Person person : store.getAll()) {
-            builder.add(PersonRepresentation.from(person, null));
+            builder.add(from(person, null));
         }
-
         return Response.ok(builder.build()).build();
     }
 }

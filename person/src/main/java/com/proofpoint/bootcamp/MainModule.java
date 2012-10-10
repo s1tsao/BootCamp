@@ -18,9 +18,9 @@ package com.proofpoint.bootcamp;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.proofpoint.bootcamp.monitor.PersonEvent;
 import org.weakref.jmx.guice.MBeanModule;
 
+import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.event.client.EventBinder.eventBinder;
 
@@ -35,9 +35,10 @@ public class MainModule
         binder.bind(PersonStore.class).in(Scopes.SINGLETON);
         MBeanModule.newExporter(binder).export(PersonStore.class).withGeneratedName();
 
-        binder.bind(PersonResource.class).in(Scopes.SINGLETON);
         binder.bind(PersonsResource.class).in(Scopes.SINGLETON);
+        binder.bind(PersonResource.class).in(Scopes.SINGLETON);
 
+        bindConfig(binder).to(StoreConfig.class);
         eventBinder(binder).bindEventClient(PersonEvent.class);
 
         discoveryBinder(binder).bindHttpAnnouncement("person");

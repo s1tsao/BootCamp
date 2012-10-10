@@ -22,22 +22,16 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class Person
 {
-    private final String id;
     private final String email;
     private final String name;
 
-    public Person(String id, String email, String name)
+    public Person(String email, String name)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        Preconditions.checkNotNull(email, "email is null");
+        Preconditions.checkNotNull(name, "name is null");
 
-        this.id = id;
         this.email = email;
         this.name = name;
-    }
-
-    public String getId()
-    {
-        return id;
     }
 
     public String getEmail()
@@ -60,9 +54,12 @@ public class Person
             return false;
         }
 
-        Person that = (Person) o;
+        Person person = (Person) o;
 
-        if (!id.equals(that.id)) {
+        if (email != null ? !email.equals(person.email) : person.email != null) {
+            return false;
+        }
+        if (name != null ? !name.equals(person.name) : person.name != null) {
             return false;
         }
 
@@ -72,17 +69,8 @@ public class Person
     @Override
     public int hashCode()
     {
-        return id.hashCode();
-    }
-
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Person{id=").append(id);
-        sb.append(", email=").append(email);
-        sb.append(", name=").append(name);
-        sb.append('}');
-        return sb.toString();
+        int result = email != null ? email.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
     }
 }

@@ -30,9 +30,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 
-@Path("/v1/person/{id}")
+import static com.proofpoint.bootcamp.PersonRepresentation.from;
+
+@Path("/v1/person/{id: \\w+}")
 public class PersonResource
 {
     private final PersonStore store;
@@ -40,7 +41,7 @@ public class PersonResource
     @Inject
     public PersonResource(PersonStore store)
     {
-        Preconditions.checkNotNull(store, "store is null");
+        Preconditions.checkNotNull(store, "store must not be null");
 
         this.store = store;
     }
@@ -49,49 +50,42 @@ public class PersonResource
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("id") String id, @Context UriInfo uriInfo)
     {
-        Preconditions.checkNotNull(id, "id is null");
-        Preconditions.checkNotNull(uriInfo, "uriInfo is null");
+        Preconditions.checkNotNull(id, "id must not be null");
 
         Person person = store.get(id);
-        if (person != null) {
-            return Response.ok(PersonRepresentation.from(person, uriInfo.getRequestUri())).build();
-        }
-        else {
+
+        if (person == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("[" + id + "]").build();
         }
+
+        return Response.ok(from(person, uriInfo.getRequestUri())).build();
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response put(@PathParam("id") String id, PersonRepresentation personRepresentation)
+    public Response put(@PathParam("id") String id, PersonRepresentation person)
     {
-        Preconditions.checkNotNull(id, "id is null");
-        Preconditions.checkNotNull(personRepresentation, "personRepresentation is null");
+        Preconditions.checkNotNull(id, "id must not be null");
+        Preconditions.checkNotNull(person, "person must not be null");
 
-        if (!id.equals(personRepresentation.getId())) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("[ID mismatch]").build();
-        }
-
-        boolean added = store.put(personRepresentation.toPerson());
+        boolean added = store.put(id, person.toPerson());
         if (added) {
-            URI uri = UriBuilder.fromResource(PersonResource.class).build(id);
-            return Response.created(uri).build();
+            UriBuilder uri = UriBuilder.fromResource(PersonResource.class);
+            return Response.created(uri.build(id)).build();
         }
-        else {
-            return Response.noContent().build();
-        }
+
+        return Response.noContent().build();
     }
 
     @DELETE
     public Response delete(@PathParam("id") String id)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        Preconditions.checkNotNull(id, "id must not be null");
 
-        if (store.delete(id)) {
-            return Response.noContent().build();
-        }
-        else {
+        if (!store.delete(id)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        return Response.noContent().build();
     }
 }

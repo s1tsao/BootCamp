@@ -20,12 +20,12 @@ import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.discovery.client.Announcer;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.event.client.HttpEventModule;
-import com.proofpoint.http.server.HttpServerModule;
-import com.proofpoint.jaxrs.JaxrsModule;
 import com.proofpoint.jmx.JmxHttpModule;
-import com.proofpoint.jmx.JmxModule;
 import com.proofpoint.jmx.http.rpc.JmxHttpRpcModule;
 import com.proofpoint.json.JsonModule;
+import com.proofpoint.http.server.HttpServerModule;
+import com.proofpoint.jaxrs.JaxrsModule;
+import com.proofpoint.jmx.JmxModule;
 import com.proofpoint.log.LogJmxModule;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeModule;
@@ -34,8 +34,7 @@ import org.weakref.jmx.guice.MBeanModule;
 
 public class Main
 {
-
-    private final static Logger logger = Logger.get(Main.class);
+    private final static Logger log = Logger.get(Main.class);
 
     public static void main(String[] args)
             throws Exception
@@ -60,7 +59,7 @@ public class Main
             injector.getInstance(Announcer.class).start();
         }
         catch (Throwable e) {
-            logger.error(e);
+            log.error(e);
             System.exit(1);
         }
     }

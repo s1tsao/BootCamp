@@ -25,10 +25,10 @@ public class TestPerson
     public void testEquivalence()
     {
         equivalenceTester()
-                .addEquivalentGroup(new Person("foo", "foo@example.com", "Mr Foo"), new Person("foo", "foo@example.com", "Mr Foo"))
-                .addEquivalentGroup(new Person("bar", "bar@example.com", "Mr Bar"))
-                .addEquivalentGroup(new Person("foobar", "foo@example.com", "Mr Bar"))
-                .addEquivalentGroup(new Person("barfoo", "bar@example.com", "Mr Foo"))
+                .addEquivalentGroup(new Person("foo@example.com", "Mr Foo"), new Person("foo@example.com", "Mr Foo"))
+                .addEquivalentGroup(new Person("bar@example.com", "Mr Bar"), new Person("bar@example.com", "Mr Bar"))
+                .addEquivalentGroup(new Person("foo@example.com", "Mr Bar"), new Person("foo@example.com", "Mr Bar"))
+                .addEquivalentGroup(new Person("bar@example.com", "Mr Foo"), new Person("bar@example.com", "Mr Foo"))
                 .check();
     }
 }

@@ -15,6 +15,7 @@
  */
 package com.proofpoint.bootcamp;
 
+import com.proofpoint.event.client.InMemoryEventClient;
 import com.proofpoint.event.client.NullEventClient;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -34,7 +35,7 @@ public class TestPersonsResource
     @BeforeMethod
     public void setup()
     {
-        store = new PersonStore(new NullEventClient());
+        store = new PersonStore(new StoreConfig(), new NullEventClient());
         resource = new PersonsResource(store);
     }
 
@@ -50,15 +51,15 @@ public class TestPersonsResource
     @Test
     public void testListAll()
     {
-        store.put(new Person("foo", "foo@example.com", "Mr Foo"));
-        store.put(new Person("bar", "bar@example.com", "Mr Bar"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("bar", new Person("bar@example.com", "Mr Bar"));
 
         Response response = resource.listAll();
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertInstanceOf(response.getEntity(), Collection.class);
         assertEquals((Collection<?>) response.getEntity(), newArrayList(
-                new PersonRepresentation("foo", "foo@example.com", "Mr Foo", null),
-                new PersonRepresentation("bar", "bar@example.com", "Mr Bar", null)
+                new PersonRepresentation("foo@example.com", "Mr Foo", null),
+                new PersonRepresentation("bar@example.com", "Mr Bar", null)
         ));
     }
 

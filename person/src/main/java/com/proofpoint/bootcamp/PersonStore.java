@@ -16,34 +16,34 @@
 package com.proofpoint.bootcamp;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.proofpoint.bootcamp.monitor.PersonStoreMonitor;
-import com.proofpoint.bootcamp.monitor.PersonStoreStats;
 import com.proofpoint.event.client.EventClient;
 import org.weakref.jmx.Flatten;
 import org.weakref.jmx.Managed;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 public class PersonStore
 {
-    private final Map<String, Person> persons;
+    private final ConcurrentMap<String, Person> persons;
     private final PersonStoreStats stats;
-    private final PersonStoreMonitor monitor;
 
     @Inject
-    public PersonStore(EventClient eventClient)
+    public PersonStore(StoreConfig config, EventClient eventClient)
     {
+        Preconditions.checkNotNull(config, "config must not be null");
         Preconditions.checkNotNull(eventClient, "eventClient is null");
 
-        Map<String, Person> personMap = Maps.newHashMap();
-        this.persons = Collections.synchronizedMap(personMap);
-        this.stats = new PersonStoreStats();
-        this.monitor = new PersonStoreMonitor(eventClient, stats);
+        Cache<String, Person> personCache = CacheBuilder.newBuilder()
+                .expireAfterWrite((long) config.getTtl().toMillis(), TimeUnit.MILLISECONDS)
+                .build();
+        persons = personCache.asMap();
+        stats = new PersonStoreStats(eventClient);
     }
 
     @Managed
@@ -53,34 +53,31 @@ public class PersonStore
         return stats;
     }
 
-    /**
-     * @return null if the entry was not found
-     */
     public Person get(String id)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        Preconditions.checkNotNull(id, "id must not be null");
 
         Person person = persons.get(id);
         if (person != null) {
-            monitor.personFetched(person);
+            stats.personFetched();
         }
-
         return person;
     }
 
     /**
      * @return true if the entry was created for the first time
      */
-    public boolean put(Person person)
+    public boolean put(String id, Person person)
     {
-        Preconditions.checkNotNull(person, "person is null");
+        Preconditions.checkNotNull(id, "id must not be null");
+        Preconditions.checkNotNull(person, "person must not be null");
 
-        boolean added = persons.put(person.getId(), person) == null;
+        boolean added = persons.put(id, person) == null;
         if (added) {
-            monitor.personAdded(person);
+            stats.personAdded(id, person);
         }
         else {
-            monitor.personUpdated(person);
+            stats.personUpdated(id, person);
         }
         return added;
     }
@@ -90,11 +87,11 @@ public class PersonStore
      */
     public boolean delete(String id)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        Preconditions.checkNotNull(id, "id must not be null");
 
         Person removedPerson = persons.remove(id);
         if (removedPerson != null) {
-            monitor.personDeleted(removedPerson);
+            stats.personRemoved(id, removedPerson);
         }
 
         return removedPerson != null;
@@ -102,7 +99,6 @@ public class PersonStore
 
     public Collection<Person> getAll()
     {
-        monitor.allPersonsFetched();
         return ImmutableList.copyOf(persons.values());
     }
 }

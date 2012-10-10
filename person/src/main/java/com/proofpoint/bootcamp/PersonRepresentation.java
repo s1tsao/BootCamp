@@ -15,8 +15,6 @@
  */
 package com.proofpoint.bootcamp;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -31,16 +29,13 @@ public class PersonRepresentation
 
     public static PersonRepresentation from(Person person, URI self)
     {
-        Preconditions.checkNotNull(person, "person is null");
-
         return new PersonRepresentation(person, self);
     }
 
     @JsonCreator
-    public PersonRepresentation(@JsonProperty("id") String id, @JsonProperty("email") String email,
-                                @JsonProperty("name") String name, @JsonProperty("self") URI self)
+    public PersonRepresentation(@JsonProperty("email") String email, @JsonProperty("name") String name, @JsonProperty("self") URI self)
     {
-        this(new Person(id, email, name), self);
+        this(new Person(email, name), self);
     }
 
     private PersonRepresentation(Person person, URI self)
@@ -51,14 +46,7 @@ public class PersonRepresentation
 
     @JsonProperty
     @NotNull(message = "is missing")
-    public String getId()
-    {
-        return person.getId();
-    }
-
-    @JsonProperty
-    @NotNull(message = "is missing")
-    @Pattern(regexp = "[^@]+@.+", message = "is malformed")
+    @Pattern(regexp = "[^@]+@[^@]+", message = "is malformed")
     public String getEmail()
     {
         return person.getEmail();
@@ -95,16 +83,10 @@ public class PersonRepresentation
 
         PersonRepresentation that = (PersonRepresentation) o;
 
-        if (!Objects.equal(person.getId(), that.person.getId())) {
+        if (person != null ? !person.equals(that.person) : that.person != null) {
             return false;
         }
-        if (!Objects.equal(person.getEmail(), that.person.getEmail())) {
-            return false;
-        }
-        if (!Objects.equal(person.getName(), that.person.getName())) {
-            return false;
-        }
-        if (!Objects.equal(self, that.self)) {
+        if (self != null ? !self.equals(that.self) : that.self != null) {
             return false;
         }
 
@@ -114,16 +96,8 @@ public class PersonRepresentation
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(person.getId(), person.getEmail(), person.getName(), self);
-    }
-
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("PersonRepresentation{person=").append(person);
-        sb.append(", self=").append(self);
-        sb.append('}');
-        return sb.toString();
+        int result = person != null ? person.hashCode() : 0;
+        result = 31 * result + (self != null ? self.hashCode() : 0);
+        return result;
     }
 }

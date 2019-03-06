@@ -32,6 +32,8 @@ import com.proofpoint.node.NodeModule;
 import com.proofpoint.tracetoken.TraceTokenModule;
 import org.weakref.jmx.guice.MBeanModule;
 
+import java.util.concurrent.TimeUnit;
+
 public class Main
 {
     private final static Logger log = Logger.get(Main.class);
@@ -56,6 +58,10 @@ public class Main
 
         try {
             Injector injector = app.strictConfig().initialize();
+
+            //testing to see if failure in announcement is caused by premature connection
+            TimeUnit.SECONDS.sleep(5);
+
             injector.getInstance(Announcer.class).start();
         }
         catch (Throwable e) {

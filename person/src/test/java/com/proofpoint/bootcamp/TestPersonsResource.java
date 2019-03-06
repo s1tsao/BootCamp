@@ -51,15 +51,15 @@ public class TestPersonsResource
     @Test
     public void testListAll()
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
-        store.put("bar", new Person("bar@example.com", "Mr Bar"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
+        store.put("bar", new Person("bar@example.com", "Mr Bar", "Mr Foo"));
 
         Response response = resource.listAll();
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertInstanceOf(response.getEntity(), Collection.class);
         assertEquals((Collection<?>) response.getEntity(), newArrayList(
-                new PersonRepresentation("foo@example.com", "Mr Foo", null),
-                new PersonRepresentation("bar@example.com", "Mr Bar", null)
+                new PersonRepresentation("foo@example.com", "Mr Foo", "Mr Foo", null),
+                new PersonRepresentation("bar@example.com", "Mr Bar", "Mr Foo", null)
         ));
     }
 

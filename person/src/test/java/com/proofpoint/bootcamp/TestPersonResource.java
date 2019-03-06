@@ -54,11 +54,11 @@ public class TestPersonResource
     @Test
     public void testGet()
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         Response response = resource.get("foo", MockUriInfo.from(URI.create("http://localhost/v1/person/1")));
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        assertEquals(response.getEntity(), new PersonRepresentation("foo@example.com", "Mr Foo", URI.create("http://localhost/v1/person/1")));
+        assertEquals(response.getEntity(), new PersonRepresentation("foo@example.com", "Mr Foo", "Mr Foo", URI.create("http://localhost/v1/person/1")));
         assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
     }
 
@@ -71,24 +71,24 @@ public class TestPersonResource
     @Test
     public void testAdd()
     {
-        Response response = resource.put("foo", new PersonRepresentation("foo@example.com", "Mr Foo", null));
+        Response response = resource.put("foo", new PersonRepresentation("foo@example.com", "Mr Foo", "Mr Foo", null));
 
         assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
         assertNull(response.getEntity());
         assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
 
-        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo"));
+        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                personAdded("foo", new Person("foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"))
         ));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testPutNullId()
     {
-        resource.put(null, new PersonRepresentation("foo@example.com", "Mr Foo", null));
+        resource.put(null, new PersonRepresentation("foo@example.com", "Mr Foo", "Mr Foo", null));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
@@ -100,26 +100,26 @@ public class TestPersonResource
     @Test
     public void testReplace()
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
-        Response response = resource.put("foo", new PersonRepresentation("bar@example.com", "Mr Bar", null));
+        Response response = resource.put("foo", new PersonRepresentation("bar@example.com", "Mr Bar", "Mr Foo", null));
 
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         assertNull(response.getEntity());
         assertNull(response.getMetadata().get("Content-Type")); // content type is set by jersey based on @Produces
 
-        assertEquals(store.get("foo"), new Person("bar@example.com", "Mr Bar"));
+        assertEquals(store.get("foo"), new Person("bar@example.com", "Mr Bar", "Mr Foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
-                personUpdated("foo", new Person("bar@example.com", "Mr Bar"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo")),
+                personUpdated("foo", new Person("bar@example.com", "Mr Bar", "Mr Foo"))
         ));
     }
 
     @Test
     public void testDelete()
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         Response response = resource.delete("foo");
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
@@ -128,8 +128,8 @@ public class TestPersonResource
         assertNull(store.get("foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
-                personRemoved("foo", new Person("foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo")),
+                personRemoved("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"))
         ));
     }
 

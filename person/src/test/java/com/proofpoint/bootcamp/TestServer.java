@@ -121,8 +121,8 @@ public class TestServer
     public void testGetAll()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put("bar", new Person("bar@example.com", "Mr Bar"));
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("bar", new Person("bar@example.com", "Mr Bar", "Mr Bar"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         List<Object> expected = listCodec.fromJson(Resources.toString(Resources.getResource("list.json"), Charsets.UTF_8));
 
@@ -137,7 +137,7 @@ public class TestServer
     public void testGetSingle()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         URI requestUri = uriFor("/v1/person/foo");
 
@@ -167,10 +167,10 @@ public class TestServer
 
         assertEquals(response.getStatusCode(), javax.ws.rs.core.Response.Status.CREATED.getStatusCode());
 
-        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo"));
+        assertEquals(store.get("foo"), new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                personAdded("foo", new Person("foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"))
         ));
     }
 
@@ -178,7 +178,7 @@ public class TestServer
     public void testDelete()
             throws IOException, ExecutionException, InterruptedException
     {
-        store.put("foo", new Person("foo@example.com", "Mr Foo"));
+        store.put("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"));
 
         StatusResponse response = client.execute(
                 prepareDelete()
@@ -192,8 +192,8 @@ public class TestServer
         assertNull(store.get("foo"));
 
         assertEquals(eventClient.getEvents(), ImmutableList.of(
-                personAdded("foo", new Person("foo@example.com", "Mr Foo")),
-                personRemoved("foo", new Person("foo@example.com", "Mr Foo"))
+                personAdded("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo")),
+                personRemoved("foo", new Person("foo@example.com", "Mr Foo", "Mr Foo"))
         ));
     }
 

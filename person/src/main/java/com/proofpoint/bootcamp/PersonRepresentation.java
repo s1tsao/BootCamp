@@ -33,9 +33,9 @@ public class PersonRepresentation
     }
 
     @JsonCreator
-    public PersonRepresentation(@JsonProperty("email") String email, @JsonProperty("name") String name, @JsonProperty("self") URI self)
+    public PersonRepresentation(@JsonProperty("email") String email, @JsonProperty("name") String name, @JsonProperty("id") String id, @JsonProperty("self") URI self)
     {
-        this(new Person(email, name), self);
+        this(new Person(email, name, id), self);
     }
 
     private PersonRepresentation(Person person, URI self)
@@ -54,9 +54,15 @@ public class PersonRepresentation
 
     @JsonProperty
     @NotNull(message = "is missing")
-    public String getName()
-    {
-        return person.getName();
+public String getName()
+{
+    return person.getName();
+}
+
+    @JsonProperty
+    @NotNull(message = "is missing")
+    public String getId(){
+        return person.getId();
     }
 
     @JsonProperty

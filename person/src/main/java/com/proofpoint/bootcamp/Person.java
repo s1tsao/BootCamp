@@ -24,14 +24,17 @@ public class Person
 {
     private final String email;
     private final String name;
+    private final String id;
 
-    public Person(String email, String name)
+    public Person(String email, String name, String id)
     {
         Preconditions.checkNotNull(email, "email is null");
         Preconditions.checkNotNull(name, "name is null");
+        Preconditions.checkNotNull(id, "id is null");
 
         this.email = email;
         this.name = name;
+        this.id = id;
     }
 
     public String getEmail()
@@ -43,6 +46,8 @@ public class Person
     {
         return name;
     }
+
+    public String getId() { return id; }
 
     @Override
     public boolean equals(Object o)
@@ -60,6 +65,9 @@ public class Person
             return false;
         }
         if (name != null ? !name.equals(person.name) : person.name != null) {
+            return false;
+        }
+        if (id != null ? !id.equals(person.id) : person.name != null) {
             return false;
         }
 

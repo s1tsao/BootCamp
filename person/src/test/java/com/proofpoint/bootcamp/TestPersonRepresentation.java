@@ -32,7 +32,7 @@ public class TestPersonRepresentation
     @Test
     public void testJsonRoundTrip()
     {
-        PersonRepresentation expected = new PersonRepresentation("alice@example.com", "Alice", null);
+        PersonRepresentation expected = new PersonRepresentation("alice@example.com", "Alice", "alice", null);
         String json = codec.toJson(expected);
         PersonRepresentation actual = codec.fromJson(json);
         assertEquals(actual, expected);
@@ -42,7 +42,7 @@ public class TestPersonRepresentation
     public void testJsonDecode()
             throws Exception
     {
-        PersonRepresentation expected = new PersonRepresentation("foo@example.com", "Mr Foo", null);
+        PersonRepresentation expected = new PersonRepresentation("foo@example.com", "Mr Foo", "Mr Foo", null);
 
         String json = Resources.toString(Resources.getResource("single.json"), Charsets.UTF_8);
         PersonRepresentation actual = codec.fromJson(json);

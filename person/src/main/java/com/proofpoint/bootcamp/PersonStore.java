@@ -24,6 +24,7 @@ import com.proofpoint.event.client.EventClient;
 import org.weakref.jmx.Flatten;
 import org.weakref.jmx.Managed;
 
+import javax.validation.constraints.Null;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ public class PersonStore
 {
     private final ConcurrentMap<String, Person> persons;
     private final PersonStoreStats stats;
+    private final static int MAXSIZE = 5;
 
     @Inject
     public PersonStore(StoreConfig config, EventClient eventClient)
@@ -72,7 +74,20 @@ public class PersonStore
         Preconditions.checkNotNull(id, "id must not be null");
         Preconditions.checkNotNull(person, "person must not be null");
 
+        //deletes overwrites oldest entry
+        //eventually will have to implement case where overflow happens of systemtime milli
+        if (persons.size()>=MAXSIZE) {
+            String key = null;
+            for(String tempId: persons.keySet()){
+                if(key == null || persons.get(tempId).getLastTouch() < persons.get(key).getLastTouch())
+                    key = tempId;
+            }
+            delete(key);
+        }
+
+        //original
         boolean added = persons.put(id, person) == null;
+
         if (added) {
             stats.personAdded(id, person);
         }

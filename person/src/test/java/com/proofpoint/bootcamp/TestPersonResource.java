@@ -85,6 +85,12 @@ public class TestPersonResource
         ));
     }
 
+    //test for invalid put from mismatch id in data body and url parameter
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testPutIdMismatch(){
+        resource.put( "0", new PersonRepresentation("0@email.com", "name0", "0", null));
+    }
+
     @Test(expectedExceptions = NullPointerException.class)
     public void testPutNullId()
     {

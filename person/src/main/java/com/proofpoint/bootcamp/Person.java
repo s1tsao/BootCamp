@@ -25,6 +25,7 @@ public class Person
     private final String email;
     private final String name;
     private final String id;
+    private long lastTouch;
 
     public Person(String email, String name, String id)
     {
@@ -35,6 +36,7 @@ public class Person
         this.email = email;
         this.name = name;
         this.id = id;
+        this.lastTouch = System.currentTimeMillis();
     }
 
     public String getEmail()
@@ -48,6 +50,8 @@ public class Person
     }
 
     public String getId() { return id; }
+
+    public long getLastTouch() { return lastTouch; }
 
     @Override
     public boolean equals(Object o)

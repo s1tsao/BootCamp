@@ -133,4 +133,22 @@ public class TestPersonStore
         assertEquals(store.getAll(), asList(new Person("foo@example.com", "Mr Foo", "Mr Foo"), new Person("bar@example.com", "Mr Bar", "Mr Bar")));
     }
 
+    //test to see if store only holds 5
+    @Test
+    public void testMax5()
+    {
+        PersonStore store = new PersonStore(new StoreConfig(), new InMemoryEventClient());
+
+        store.put( "0", new Person(  "0@email.com", "name0", "id0" ));
+        store.put( "1", new Person(  "1@email.com", "name1", "id1" ));
+        store.put( "2", new Person(  "2@email.com", "name2", "id2" ));
+        store.put( "3", new Person(  "3@email.com", "name3", "id3" ));
+        store.put( "4", new Person(  "4@email.com", "name4", "id4" ));
+        assertEquals(new Person("0@email.com", "name0", "0"), store.get("0"));
+
+        store.put( "5", new Person(  "5@email.com", "name5", "id5" ));
+        assertEquals(store.getAll().size(), 5);
+        assertNull(store.get("0"));
+        assertEquals(new Person("5@email.com", "name5", "5"), store.get("5"));
+    }
 }

@@ -68,6 +68,11 @@ public class PersonResource
         Preconditions.checkNotNull(id, "id must not be null");
         Preconditions.checkNotNull(person, "person must not be null");
 
+        //checks for mismatched id in body and url parameter
+        if(!id.equals(person.getId())){
+            return Response.status(Response.Status.BAD_REQUEST).entity("["+id+"] does not match ["+person.getId()+"]").build();
+        }
+
         boolean added = store.put(id, person.toPerson());
         if (added) {
             UriBuilder uri = UriBuilder.fromResource(PersonResource.class);

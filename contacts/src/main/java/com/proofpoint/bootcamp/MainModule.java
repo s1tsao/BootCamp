@@ -24,7 +24,7 @@ import com.proofpoint.bootcamp.monitor.ContactStats;
 import org.weakref.jmx.guice.MBeanModule;
 
 import static com.proofpoint.event.client.EventBinder.eventBinder;
-
+import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 public class MainModule
         implements Module
 {
@@ -35,8 +35,11 @@ public class MainModule
 
         binder.bind(ContactStore.class).in(Scopes.SINGLETON);
         binder.bind(ContactResource.class).in(Scopes.SINGLETON);
+        binder.bind(ContactsResource.class).in(Scopes.SINGLETON);
         binder.bind(ContactStats.class).in(Scopes.SINGLETON);
         binder.bind(ContactMonitor.class).in(Scopes.SINGLETON);
+
+        bindConfig(binder).to(StoreConfig.class);
 
         MBeanModule.newExporter(binder).export(ContactResource.class).withGeneratedName();
 

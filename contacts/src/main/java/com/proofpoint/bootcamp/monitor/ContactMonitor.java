@@ -63,6 +63,13 @@ public class ContactMonitor
         logger.debug("Contact exists ownerId=%s, contactId=%s (duration=%s)", ownerId, contactId, duration);
     }
 
+    public void contactsRequested(String ownerId, Duration duration)
+    {
+        stats.contactExistsRequestSucceeded(duration);
+        logger.debug("Contact requested ownerId=%s (duration=%s)", ownerId, duration);
+
+    }
+
     public void contactExistsRequestFailed(Throwable err, String ownerId, String contactId)
     {
         stats.contactExistsRequestFailed();

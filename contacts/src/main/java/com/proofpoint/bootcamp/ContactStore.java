@@ -21,22 +21,30 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.proofpoint.bootcamp.monitor.ContactMonitor;
 
+import java.io.InputStream;
 import java.util.Collection;
+
+import java.util.Properties;
 
 public class ContactStore
 {
     private final Multimap<String, String> contacts;
     private final ContactMonitor monitor;
     private final Object lock;
+    private int MAXSIZE = 100;
 
     @Inject
-    public ContactStore(ContactMonitor monitor)
+    public ContactStore(ContactMonitor monitor, StoreConfig storeConfig)
     {
         Preconditions.checkNotNull(monitor, "monitor is null");
+        Preconditions.checkNotNull(storeConfig, "storeConfig is null");
 
         this.monitor = monitor;
         this.contacts = HashMultimap.create();
         this.lock = new Object();
+
+        MAXSIZE = storeConfig.getCapacity();
+        System.out.println("max contact size:"+MAXSIZE);
     }
 
     public Collection<String> getContacts(String ownerId)
@@ -63,9 +71,10 @@ public class ContactStore
         Preconditions.checkNotNull(ownerId, "ownerId is null");
         Preconditions.checkNotNull(contactId, "contactId is null");
 
+        System.out.println("max contacts:");
         synchronized (lock) {
             Collection<String> existing = contacts.get(ownerId);
-            if (existing.contains(contactId)) {
+            if (existing.contains(contactId) || existing.size() > MAXSIZE) {
                 return false;
             }
 

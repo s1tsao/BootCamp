@@ -18,6 +18,7 @@ package com.proofpoint.bootcamp;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.proofpoint.discovery.client.DiscoveryBinder;
 import org.weakref.jmx.guice.MBeanModule;
 
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
@@ -41,6 +42,19 @@ public class MainModule
         bindConfig(binder).to(StoreConfig.class);
         eventBinder(binder).bindEventClient(PersonEvent.class);
 
-        discoveryBinder(binder).bindHttpAnnouncement("person");
+        DiscoveryBinder.discoveryBinder(binder).bindHttpAnnouncement("person");
+
+        /*binder.disableCircularProxies();
+
+        binder.bind(PersonStore.class).in(Scopes.SINGLETON);
+        reportBinder(binder).export(PersonStore.class).withGeneratedName();
+
+        jaxrsBinder(binder).bind(PersonsResource.class);
+        jaxrsBinder(binder).bind(PersonResource.class);
+
+        bindConfig(binder).to(StoreConfig.class);
+        eventBinder(binder).bindEventClient(PersonEvent.class);
+
+        discoveryBinder(binder).bindHttpAnnouncement("person");*/
     }
 }

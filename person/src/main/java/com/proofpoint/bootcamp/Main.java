@@ -56,11 +56,12 @@ public class Main
                 new TraceTokenModule(),
                 new MainModule());
 
+
         try {
-            Injector injector = app.strictConfig().initialize();
+            Injector injector = app.initialize();
 
             //testing to see if failure in announcement is caused by premature connection
-            TimeUnit.SECONDS.sleep(5);
+            //TimeUnit.SECONDS.sleep(5);
 
             injector.getInstance(Announcer.class).start();
         }

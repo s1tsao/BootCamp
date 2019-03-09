@@ -26,6 +26,8 @@ import javax.ws.rs.core.Response;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+
+
 public class TestContactResource
 {
     private InMemoryEventClient eventClient;
@@ -37,7 +39,7 @@ public class TestContactResource
     {
         eventClient = new InMemoryEventClient();
         ContactMonitor monitor = new ContactMonitor(eventClient, new ContactStats());
-        store = new ContactStore(monitor);
+        store = new ContactStore(monitor, new StoreConfig());
         resource = new ContactResource(store, monitor);
     }
 

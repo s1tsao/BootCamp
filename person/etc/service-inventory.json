@@ -1,0 +1,16 @@
+{
+  "environment": "zapp_ci",
+  "services": [
+    {
+      "id": "d47ade3c-7859-3a25-8bf8-e29717faa2ff",
+      "nodeId": "1c293071-ab25-3f35-8730-217600952eda",
+      "type": "discovery",
+      "pool": "general",
+      "location": "/localhost",
+      "state": "RUNNING",
+      "properties": {
+        "http": "http://m0050964.lab.ppops.net:4111"
+      }
+    }
+  ]
+}

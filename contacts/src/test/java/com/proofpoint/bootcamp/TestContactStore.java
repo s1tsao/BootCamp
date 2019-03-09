@@ -32,7 +32,7 @@ public class TestContactStore
     public void setup()
     {
         ContactMonitor monitor = new ContactMonitor(new InMemoryEventClient(), new ContactStats());
-        store = new ContactStore(monitor);
+        store = new ContactStore(monitor, new StoreConfig());
     }
 
     @Test
